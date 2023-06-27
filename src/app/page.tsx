@@ -1,95 +1,64 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+import { MarketplaceProperties } from "@/types";
+import HomeClient from "./_components/page/HomeClient";
+import { getServerSession } from "./api/auth/[...nextauth]";
+import MicrosoftMarketplaceApi from "@/libraries/microsoft-marketplace-api";
+import MicrosoftGraphApi from "@/libraries/microsoft-graph-api";
+import { Metadata } from "next";
 
-export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+interface PageProps {
+  params: { id: string };
+  searchParams: { token: string };
 }
+
+export default async function Page({ searchParams }: PageProps) {
+  const { token: marketplaceToken } = searchParams;
+  if (!marketplaceToken) {
+    throw new Error("You need a marketplace token to access this page");
+  }
+
+  const data = await getLandingPageData(searchParams.token);
+  return <HomeClient {...data} />;
+}
+
+async function getLandingPageData(marketplaceToken: string) {
+  const session = await getServerSession();
+  if (!session) {
+    throw new Error("You must be logged in to access this page");
+  }
+
+  const { decodedToken } = decodeToken(marketplaceToken);
+
+  const [properties, moreUserInfo] = await Promise.all([
+    MicrosoftMarketplaceApi.resolveSubscription(decodedToken),
+    MicrosoftGraphApi.getUserInfo(),
+  ]);
+
+  return {
+    properties,
+    user: {
+      ...session.user,
+      ...moreUserInfo,
+    },
+  };
+}
+
+function decodeToken(token: string): {
+  decodedToken: string;
+  properties: MarketplaceProperties;
+} {
+  const buff = Buffer.from(token, "base64");
+  const str = buff.toString("utf8").replace(/\n/g, "");
+  const tokenProperties = JSON.parse(str);
+  return {
+    decodedToken: decodeURIComponent(token),
+    properties: tokenProperties,
+  };
+}
+
+export const metadata: Metadata = {
+  title: "Enform | Activate your subscription",
+  description:
+    "Confirm your subscription to Enform and start using our services",
+};
+
+export type LandingPageData = Awaited<ReturnType<typeof getLandingPageData>>;
