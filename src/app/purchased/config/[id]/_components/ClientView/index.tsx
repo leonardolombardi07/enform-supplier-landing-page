@@ -10,13 +10,11 @@ export default function ClientView({ children }: ClientViewProps) {
   return (
     <main style={{ padding: "1em" }}>
       <Segment>
-        <Message success>
-          <Message.Header>Success!</Message.Header>
-
+        <Message info>
+          <Message.Header>Wooops!</Message.Header>
           <p>
-            Your subscription was created. In less than a week {"we'll"} be
-            contacting you to activate your subscription and enable the use of
-            our product.
+            We {"don't"} have a subscription page yet. Please go to the
+            subscription page on your marketplace account.
           </p>
         </Message>
 

@@ -16,6 +16,15 @@ export default async function Page(props: PageProps) {
       <pre>
         <code>{JSON.stringify(subscription, null, 2)}</code>
       </pre>
+
+      {process.env.NODE_ENV === "development" && (
+        <div>
+          <h3>Debug</h3>
+          <pre>
+            <code>{JSON.stringify(props, null, 2)}</code>
+          </pre>
+        </div>
+      )}
     </ClientView>
   );
 }
@@ -30,7 +39,8 @@ async function getPurchasePageData(props: PageProps) {
   const decoded_sub = decodeURIComponent(_sub);
 
   const fetchSubscriptionUrl = `${BASE_STORAGE_URL}${decoded_sub}`;
-  const { data } = await axios.get(fetchSubscriptionUrl);
+  // const { data } = await axios.get(fetchSubscriptionUrl);
+  const data = {};
   return data as Subscription;
 }
 
