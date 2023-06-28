@@ -1,12 +1,17 @@
 "use client";
 
+import { Subscription } from "@/types";
 import { Message, Segment } from "semantic-ui-react";
+import { PageProps } from "../../page";
 
-interface ClientViewProps {
-  children: React.ReactNode;
+interface ClientViewProps extends PageProps {
+  subscription: Subscription | null;
 }
 
-export default function ClientView({ children }: ClientViewProps) {
+export default function ClientView({
+  subscription,
+  ...pageProps
+}: ClientViewProps) {
   return (
     <main style={{ padding: "1em" }}>
       <Segment>
@@ -20,8 +25,42 @@ export default function ClientView({ children }: ClientViewProps) {
           </p>
         </Message>
 
-        {children}
+        {subscription ? (
+          <SubscriptionView subscription={subscription} />
+        ) : (
+          <Message error>
+            <Message.Header>But some error happened....</Message.Header>
+            <p>
+              We {`couldn't`} show the data of your subscription on this page.{" "}
+              {`Don't`} worry, we still have the data and will contact you soon!
+            </p>
+          </Message>
+        )}
+
+        {process.env.NODE_ENV === "development" && (
+          <Segment>
+            <h3>Debug</h3>
+            <pre>
+              <code>{JSON.stringify(pageProps, null, 2)}</code>
+            </pre>
+          </Segment>
+        )}
       </Segment>
     </main>
+  );
+}
+
+interface SubscriptionViewProps {
+  subscription: Subscription;
+}
+
+function SubscriptionView({ subscription }: SubscriptionViewProps) {
+  return (
+    <Segment>
+      <h1>Subscription</h1>
+      <pre>
+        <code>{JSON.stringify(subscription, null, 2)}</code>
+      </pre>
+    </Segment>
   );
 }

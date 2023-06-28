@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Secret files
+/mona_deployment_summary.txt
+
 # dependencies
 /node_modules
 /.pnp
